@@ -26,7 +26,7 @@ namespace Otanime
 
         public bool IsAdmin { get; set; } = false;
 
-        public List<Order> Orders { get; set; } = new List<Order>();
+        public List<Order>? Orders { get; set; }
 
         [MaxLength(200)]
         public string? Address { get; set; }
