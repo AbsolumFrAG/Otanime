@@ -1,92 +1,74 @@
 using Microsoft.AspNetCore.Mvc;
 using Otanime.Data;
-using Otanime.Models;
-using Microsoft.AspNetCore.Http;
-using System.Linq;
 
-namespace Otanime.Controllers
+namespace Otanime.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class UserController(AppDbContext context) : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UserController : ControllerBase
+    private static bool ValidatePassword(string password)
     {
-        private readonly AppDbContext _context;
+        if (password.Length < 6)
+            return false;
 
-        public UserController(AppDbContext context)
+        var containsUpper = password.Any(char.IsUpper);
+        var containsLower = password.Any(char.IsLower);
+        var containsDigit = password.Any(char.IsDigit);
+
+        return containsUpper && containsLower && containsDigit;
+    }
+
+    [HttpPost("create")]
+    public IActionResult Create([FromBody] User model)
+    {
+        if (context.Users.Any(u => u.Email == model.Email))
         {
-            _context = context;
+            return BadRequest("Email is already in use.");
         }
 
-        private bool ValidatePassword(string password)
+        if (!ValidatePassword(model.Password))
         {
-            if (password.Length < 6)
-                return false;
-
-            bool containsUpper = password.Any(char.IsUpper);
-            bool containsLower = password.Any(char.IsLower);
-            bool containsDigit = password.Any(char.IsDigit);
-
-            return containsUpper && containsLower && containsDigit;
+            return BadRequest("Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, and one digit.");
         }
 
-        [HttpPost("create")]
-        public IActionResult Create([FromBody] User model)
+        model.SetPassword(model.Password);
+        model.IsAdmin = false;
+        context.Users.Add(model);
+        context.SaveChanges();
+
+        return Ok("User created successfully.");
+    }
+
+    [HttpDelete("delete/{id}")]
+    public IActionResult Delete(int id)
+    {
+        if (!Request.Cookies.TryGetValue("userId", out var userIdString) ||
+            !int.TryParse(userIdString, out var currentUserId)) return Unauthorized("User not authenticated.");
+        var currentUser = context.Users.Find(currentUserId);
+
+        if (currentUser == null || (!currentUser.IsAdmin && currentUser.UserId != id))
         {
-            if (_context.Users.Any(u => u.Email == model.Email))
-            {
-                return BadRequest("Email is already in use.");
-            }
-
-            if (!ValidatePassword(model.Password))
-            {
-                return BadRequest("Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, and one digit.");
-            }
-
-            model.SetPassword(model.Password);
-            model.IsAdmin = false;
-            _context.Users.Add(model);
-            _context.SaveChanges();
-
-            return Ok("User created successfully.");
+            return Unauthorized("You do not have permission to delete this account.");
         }
 
-        [HttpDelete("delete/{id}")]
-        public IActionResult Delete(int id)
+        var userToDelete = context.Users.Find(id);
+
+        if (userToDelete == null)
         {
-            if (Request.Cookies.TryGetValue("userId", out var userIdString) && int.TryParse(userIdString, out var currentUserId))
-            {
-                var currentUser = _context.Users.Find(currentUserId);
-
-                if (currentUser == null || (!currentUser.IsAdmin && currentUser.UserId != id))
-                {
-                    return Unauthorized("You do not have permission to delete this account.");
-                }
-
-                var userToDelete = _context.Users.Find(id);
-
-                if (userToDelete == null)
-                {
-                    return NotFound("User not found.");
-                }
-
-                _context.Users.Remove(userToDelete);
-                _context.SaveChanges();
-
-                if (currentUser.UserId == id)
-                {
-                    var cookieOptions = new CookieOptions
-                    {
-                        Expires = DateTime.Now.AddDays(-1)
-                    };
-                    Response.Cookies.Append("userId", "", cookieOptions);
-                }
-
-                return Ok("User deleted successfully.");
-            }
-
-            return Unauthorized("User not authenticated.");
+            return NotFound("User not found.");
         }
 
+        context.Users.Remove(userToDelete);
+        context.SaveChanges();
 
+        if (currentUser.UserId != id) return Ok("User deleted successfully.");
+        var cookieOptions = new CookieOptions
+        {
+            Expires = DateTime.Now.AddDays(-1)
+        };
+        Response.Cookies.Append("userId", "", cookieOptions);
+
+        return Ok("User deleted successfully.");
     }
 }
