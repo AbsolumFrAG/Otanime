@@ -16,4 +16,8 @@
       </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Pages\Auth\Login.cshtml" />
+    </ItemGroup>
+
 </Project>
