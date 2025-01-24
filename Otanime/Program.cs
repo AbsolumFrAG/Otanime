@@ -10,8 +10,12 @@ builder.Services.AddControllersWithViews()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
 
 // Ajouter le contexte de la base de données SQLite
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<ApplicationDbContext>(options => 
+{
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.EnableDetailedErrors();
+    options.EnableSensitiveDataLogging();
+});
 
 var app = builder.Build();
 

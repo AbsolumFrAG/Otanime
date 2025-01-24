@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Otanime.Views.Login;
+namespace Otanime.Views.Product;
 
 public class Index : PageModel
 {

@@ -1,6 +1,6 @@
 namespace Otanime.Controllers;
 
-public class ProductController
+public class CheckoutController
 {
     
 }

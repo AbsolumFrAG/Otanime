@@ -1,51 +1,76 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 
-namespace Otanime
+namespace Otanime.Models;
+
+public class Order
 {
-    public class Order
+    public int Id { get; set; }
+    
+    [Required]
+    public string UserId { get; set; }
+    
+    [ForeignKey("UserId")]
+    public IdentityUser User { get; set; }
+
+    [Required]
+    public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+    
+    [Required]
+    [Column(TypeName = "decimal(18,2)")]
+    [Range(0.01, 100000, ErrorMessage = "Montant total invalide")]
+    public decimal TotalAmount { get; set; }
+    
+    [Required]
+    [StringLength(200, MinimumLength = 10)]
+    public string ShippingAddress { get; set; }
+
+    [Required]
+    public OrderStatus Status { get; set; } = OrderStatus.Pending;
+    
+    [StringLength(50)]
+    public string TrackingNumber { get; set; }
+    
+    [Required]
+    [EmailAddress]
+    public string CustomerEmail { get; set; }
+    
+    public string PaymentIntentId { get; set; }
+
+    public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+
+    public enum OrderStatus
     {
-        [Key]
-        public int OrderId { get; set; }
-
-        [Required]
-        public int UserId { get; set; }
-        public User User { get; set; }
-
-        [Required]
-        public DateTime OrderDate { get; set; }
-
-        [MaxLength(100)]
-        public string? PaymentMethod { get; set; }
-
-        [MaxLength(100)]
-        public string? PaymentStatus { get; set; }
-
-        public List<ProductOrder> ProductOrders { get; set; } = new List<ProductOrder>();
-
-        [MaxLength(100)]
-        public string? Status { get; set; }
-
-        [MaxLength(100)]
-        public string? DeliveryType { get; set; }
-
-        [MaxLength(100)]
-        public string? DeliveryPrice { get; set; }
-
-        [MaxLength(200)]
-        public string? Address { get; set; }
-
-        [MaxLength(100)]
-        public string? City { get; set; }
-
-        [MaxLength(100)]
-        public string? Country { get; set; }
-
-        [MaxLength(20)]
-        public string? PostalCode { get; set; }
-
-        [Phone]
-        public string? Phone { get; set; }
+        Pending,
+        Processing,
+        Shipped,
+        Delivered,
+        Cancelled
     }
+}
+
+public class OrderItem
+{
+    public int Id { get; set; }
+    
+    [Required]
+    public int ProductId { get; set; }
+    
+    [ForeignKey("ProductId")]
+    public Product Product { get; set; }
+    
+    [Required]
+    [Range(1, 100)]
+    public int Quantity { get; set; }
+    
+    [Required]
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal UnitPrice { get; set; }
+    
+    [Required]
+    public int OrderId { get; set; }
+    
+    [ForeignKey("OrderId")]
+    public Order Order { get; set; }
 }

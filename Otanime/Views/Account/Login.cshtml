@@ -1,0 +1,28 @@
+@model Otanime.Models.ViewModels.LoginViewModel
+
+<div class="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold mb-4">Connexion</h2>
+    
+    <form asp-action="Login" method="post">
+        <div class="mb-4">
+            <label asp-for="Email" class="block mb-2"></label>
+            <input asp-for="Email" class="w-full p-2 border rounded">
+            <span asp-validation-for="Email" class="text-red-500"></span>
+        </div>
+        
+        <div class="mb-4">
+            <label asp-for="Password" class="block mb-2"></label>
+            <input asp-for="Password" class="w-full p-2 border rounded">
+            <span asp-validation-for="Password" class="text-red-500"></span>
+        </div>
+        
+        <div class="mb-6 flex items-center">
+            <input asp-for="RememberMe" class="mr-2">
+            <label asp-for="RememberMe" class="text-sm"></label>
+        </div>
+        
+        <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+            Se connecter
+        </button>
+    </form>
+</div>
