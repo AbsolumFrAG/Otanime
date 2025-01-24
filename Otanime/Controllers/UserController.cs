@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Otanime.Data;
-using Otanime.Models;
-using Microsoft.AspNetCore.Http;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace Otanime.Controllers
 {
@@ -87,6 +85,72 @@ namespace Otanime.Controllers
             return Unauthorized("User not authenticated.");
         }
 
+        [HttpGet("{id}")]
+        public IActionResult GetUserOrders(int id)
+        {
+            if (Request.Cookies.TryGetValue("userId", out var userIdString) && int.TryParse(userIdString, out var currentUserId))
+            {
+                var currentUser = _context.Users
+                    .Include(u => u.Orders!)
+                    .ThenInclude(o => o.ProductOrders!)
+                    .ThenInclude(po => po.Product)
+                    .FirstOrDefault(u => u.UserId == currentUserId);
 
+                if (currentUser == null || (!currentUser.IsAdmin && currentUser.UserId != id))
+                {
+                    return Unauthorized("You do not have permission to view this user's orders.");
+                }
+
+                var user = _context.Users
+                    .Include(u => u.Orders!)
+                    .ThenInclude(o => o.ProductOrders!)
+                    .ThenInclude(po => po.Product)
+                    .FirstOrDefault(u => u.UserId == id);
+
+                if (user == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                return Ok(new
+                {
+                    user.UserId,
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    user.Address,
+                    user.City,
+                    user.Country,
+                    user.PostalCode,
+                    user.Phone,
+                    Orders = user.Orders?.Select(o => new
+                    {
+                        o.OrderId,
+                        o.OrderDate,
+                        o.PaymentMethod,
+                        o.PaymentStatus,
+                        o.Status,
+                        o.DeliveryType,
+                        o.DeliveryPrice,
+                        o.Address,
+                        o.City,
+                        o.Country,
+                        o.PostalCode,
+                        o.Phone,
+                        ProductOrders = o.ProductOrders.Select(po => new
+                        {
+                            po.ProductOrderId,
+                            po.ProductId,
+                            po.Product.Name,
+                            po.Quantity,
+                            po.Price,
+                            po.DeliveryDate
+                        })
+                    })
+                });
+            }
+
+            return Unauthorized("User not authenticated.");
+        }
     }
 }
