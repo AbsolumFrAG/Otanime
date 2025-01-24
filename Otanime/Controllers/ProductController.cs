@@ -1,132 +1,112 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Otanime.Data;
 using Otanime.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
-namespace Otanime.Controllers
+namespace Otanime.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class ProductController(AppDbContext context) : Controller
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ProductController : ControllerBase
+    private bool IsAdmin()
     {
-        private readonly AppDbContext _context;
+        if (!Request.Cookies.TryGetValue("userId", out var userIdString) ||
+            !int.TryParse(userIdString, out var currentUserId)) return false;
+        var currentUser = context.Users.Find(currentUserId);
+        return currentUser is { IsAdmin: true };
+    }
 
-        public ProductController(AppDbContext context)
+    [HttpGet("list")]
+    public IActionResult List()
+    {
+        var products = context.Products.Include(p => p.Images).ToList();
+        return Ok(products);
+    }
+
+    [HttpPost("create")]
+    public IActionResult Create([FromBody] ProductModel model)
+    {
+        if (!IsAdmin())
         {
-            _context = context;
+            return Unauthorized("Only administrators can create products.");
         }
 
-        private bool IsAdmin()
+        var product = new Product
         {
-            if (Request.Cookies.TryGetValue("userId", out var userIdString) && int.TryParse(userIdString, out var currentUserId))
-            {
-                var currentUser = _context.Users.Find(currentUserId);
-                return currentUser != null && currentUser.IsAdmin;
-            }
-            return false;
+            Name = model.Name,
+            Price = model.Price,
+            Description = model.Description,
+            Stock = model.Stock
+        };
+
+        context.Products.Add(product);
+        context.SaveChanges();
+
+        foreach (var newImage in model.Images.Select(image => new Image
+                 {
+                     ImageUrl = image.ImageUrl,
+                     ProductId = product.ProductId
+                 }))
+        {
+            context.Images.Add(newImage);
+        }
+        context.SaveChanges();
+
+        return Ok("Product created successfully.");
+    }
+
+    [HttpPut("update/{id:int}")]
+    public IActionResult Update(int id, [FromBody] ProductModel model)
+    {
+        if (!IsAdmin())
+        {
+            return Unauthorized("Only administrators can update products.");
         }
 
-        [HttpGet("list")]
-        public IActionResult List()
+        var product = context.Products.Include(p => p.Images).SingleOrDefault(p => p.ProductId == id);
+        if (product == null)
         {
-            var products = _context.Products.Include(p => p.Images).ToList();
-            return Ok(products);
+            return NotFound("Product not found.");
         }
 
-        [HttpPost("create")]
-        public IActionResult Create([FromBody] ProductModel model)
+        product.Name = model.Name;
+        product.Price = model.Price;
+        product.Description = model.Description;
+        product.Stock = model.Stock;
+
+        context.Images.RemoveRange(product.Images);
+
+        foreach (var newImage in model.Images.Select(image => new Image
+                 {
+                     ImageUrl = image.ImageUrl,
+                     ProductId = product.ProductId
+                 }))
         {
-            if (!IsAdmin())
-            {
-                return Unauthorized("Only administrators can create products.");
-            }
-
-            var product = new Product
-            {
-                Name = model.Name,
-                Price = model.Price,
-                Description = model.Description,
-                Stock = model.Stock
-            };
-
-            _context.Products.Add(product);
-            _context.SaveChanges();
-
-            if (model.Images != null)
-            {
-                foreach (var image in model.Images)
-                {
-                    var newImage = new Image
-                    {
-                        ImageUrl = image.ImageUrl,
-                        ProductId = product.ProductId
-                    };
-                    _context.Images.Add(newImage);
-                }
-                _context.SaveChanges();
-            }
-
-            return Ok("Product created successfully.");
+            context.Images.Add(newImage);
         }
 
-        [HttpPut("update/{id}")]
-        public IActionResult Update(int id, [FromBody] ProductModel model)
+        context.SaveChanges();
+        return Ok("Product updated successfully.");
+    }
+
+    [HttpDelete("delete/{id:int}")]
+    public IActionResult Delete(int id)
+    {
+        if (!IsAdmin())
         {
-            if (!IsAdmin())
-            {
-                return Unauthorized("Only administrators can update products.");
-            }
-
-            var product = _context.Products.Include(p => p.Images).SingleOrDefault(p => p.ProductId == id);
-            if (product == null)
-            {
-                return NotFound("Product not found.");
-            }
-
-            product.Name = model.Name;
-            product.Price = model.Price;
-            product.Description = model.Description;
-            product.Stock = model.Stock;
-
-            _context.Images.RemoveRange(product.Images);
-
-            if (model.Images != null)
-            {
-                foreach (var image in model.Images)
-                {
-                    var newImage = new Image
-                    {
-                        ImageUrl = image.ImageUrl,
-                        ProductId = product.ProductId
-                    };
-                    _context.Images.Add(newImage);
-                }
-            }
-
-            _context.SaveChanges();
-            return Ok("Product updated successfully.");
+            return Unauthorized("Only administrators can delete products.");
         }
 
-        [HttpDelete("delete/{id}")]
-        public IActionResult Delete(int id)
+        var product = context.Products.Include(p => p.Images).SingleOrDefault(p => p.ProductId == id);
+        if (product == null)
         {
-            if (!IsAdmin())
-            {
-                return Unauthorized("Only administrators can delete products.");
-            }
-
-            var product = _context.Products.Include(p => p.Images).SingleOrDefault(p => p.ProductId == id);
-            if (product == null)
-            {
-                return NotFound("Product not found.");
-            }
-
-            _context.Images.RemoveRange(product.Images);
-            _context.Products.Remove(product);
-            _context.SaveChanges();
-            return Ok("Product deleted successfully.");
+            return NotFound("Product not found.");
         }
+
+        context.Images.RemoveRange(product.Images);
+        context.Products.Remove(product);
+        context.SaveChanges();
+        return Ok("Product deleted successfully.");
     }
 }

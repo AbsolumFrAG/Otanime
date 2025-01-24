@@ -88,8 +88,8 @@ public class CartController(AppDbContext context) : Controller
     }
 }
 
-public class CartItemModel
+public class CartItemModel(int productId, int quantity)
 {
-    public int ProductId { get; set; }
-    public int Quantity { get; set; }
+    public int ProductId { get; } = productId;
+    public int Quantity { get; } = quantity;
 }

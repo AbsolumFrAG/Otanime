@@ -5,7 +5,7 @@ namespace Otanime.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class UserController(AppDbContext context) : ControllerBase
+public class UserController(AppDbContext context) : Controller
 {
     private static bool ValidatePassword(string password)
     {
@@ -40,7 +40,7 @@ public class UserController(AppDbContext context) : ControllerBase
         return Ok("User created successfully.");
     }
 
-    [HttpDelete("delete/{id}")]
+    [HttpDelete("delete/{id:int}")]
     public IActionResult Delete(int id)
     {
         if (!Request.Cookies.TryGetValue("userId", out var userIdString) ||
