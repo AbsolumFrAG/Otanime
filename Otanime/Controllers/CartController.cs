@@ -66,13 +66,14 @@ namespace Otanime.Controllers
         public IActionResult GetCartItems()
         {
             var cart = GetCart();
-            var cartItems = cart.Select(item => new
+            var cartItems = cart.Where(item => _context.Products.Find(item.Key) != null).Select(item => new
             {
                 ProductId = item.Key,
                 Quantity = item.Value,
                 Product = _context.Products.Find(item.Key)
             }).ToList();
 
+            SaveCart(cartItems.ToDictionary(item => item.ProductId, item => item.Quantity));
             return Ok(cartItems);
         }
 

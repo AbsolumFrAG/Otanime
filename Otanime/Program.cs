@@ -1,10 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Otanime.Data;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
 
 // Ajouter le contexte de la base de données SQLite
 builder.Services.AddDbContext<AppDbContext>(options =>
