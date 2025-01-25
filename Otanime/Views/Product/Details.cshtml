@@ -1,73 +1,163 @@
-@using Microsoft.AspNetCore.Mvc.TagHelpers
 @model Otanime.ViewModels.ProductDetailViewModel
 
-<div class="max-w-7xl mx-auto px-4 py-8">
-    <div class="grid md:grid-cols-2 gap-8">
-        <!-- Colonne image -->
-        <div class="carousel rounded-box">
-            <div class="carousel-item w-full">
-                <img src="@Model.Product.ImageUrl" 
-                     class="w-full h-96 object-cover" 
-                     alt="@Model.Product.Name" />
-            </div>
-        </div>
+@{
+    ViewData["Title"] = Model.Product.Name;
+}
 
-        <!-- Colonne informations -->
-        <div>
-            <h1 class="text-4xl font-bold mb-4">@Model.Product.Name</h1>
-            <div class="badge badge-primary">@Model.Product.Category</div>
-            
-            <p class="text-3xl my-6">@Model.Product.Price.ToString("C")</p>
-            
-            <div class="mb-8">
-                <h2 class="text-xl font-bold mb-2">Description</h2>
-                <p class="text-gray-600">@Model.Product.Description</p>
+<div class="container px-4 py-8 mx-auto">
+    <div class="max-w-7xl mx-auto">
+        <!-- Produit principal -->
+        <div class="grid gap-8 lg:grid-cols-2">
+            <!-- Image -->
+            <div class="overflow-hidden bg-white rounded-lg">
+                <img
+                    src="@Model.Product.ImageUrl"
+                    alt="@Model.Product.Name"
+                    class="object-contain w-full h-full aspect-square"
+                />
             </div>
 
-            <form asp-controller="Cart" asp-action="AddToCart" method="post">
-                <input type="hidden" name="productId" value="@Model.Product.Id" />
-                <div class="flex items-center gap-4">
-                    <input type="number" 
-                           name="quantity" 
-                           value="1" 
-                           min="1" 
-                           class="input input-bordered w-20" />
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-cart-plus mr-2"></i>Ajouter au panier
-                    </button>
+            <!-- Détails -->
+            <div class="flex flex-col">
+                <h1 class="mb-2 text-3xl font-bold text-gray-900">@Model.Product.Name</h1>
+                <div class="flex items-center mb-4">
+                    <span class="text-2xl font-bold text-blue-600">
+                        @Model.Product.Price.ToString("C")
+                    </span>
+                    @if (Model.Product is { InStock: true, StockQuantity: > 0 })
+                    {
+                        <span class="px-3 py-1 ml-4 text-sm text-green-800 bg-green-100 rounded-full">
+                            En stock
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="px-3 py-1 ml-4 text-sm text-red-800 bg-red-100 rounded-full">
+                            Rupture de stock
+                        </span>
+                    }
                 </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Produits similaires -->
-    @if (Model.RelatedProducts.Any())
-    {
-        <div class="mt-16">
-            <h2 class="text-2xl font-bold mb-6">Produits similaires</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                @foreach (var product in Model.RelatedProducts)
+                <div class="prose prose-blue max-w-none mb-6">
+                    <p class="text-gray-600">@Model.Product.Description</p>
+                </div>
+
+                @if (Model.Product is { InStock: true, StockQuantity: > 0 })
                 {
-                    <div class="card bg-base-100 shadow-xl">
-                        <figure>
-                            <img src="@product.ImageUrl" 
-                                 alt="@product.Name" 
-                                 class="h-48 w-full object-cover" />
-                        </figure>
-                        <div class="card-body">
-                            <h3 class="card-title">@product.Name</h3>
-                            <p>@product.Price.ToString("C")</p>
-                            <div class="card-actions justify-end">
-                                <a asp-action="Details" 
-                                   asp-route-id="@product.Id" 
-                                   class="btn btn-primary btn-sm">
-                                    Voir
-                                </a>
-                            </div>
+                    <form
+                        asp-controller="Cart"
+                        asp-action="AddToCart"
+                        method="post"
+                        class="mt-auto"
+                    >
+                        @Html.AntiForgeryToken()
+                        <input
+                            type="hidden"
+                            name="productId"
+                            value="@Model.Product.Id"
+                        />
+                        <div class="flex items-center gap-4 mb-4">
+                            <label
+                                for="quantity"
+                                class="text-sm font-medium text-gray-700"
+                            >
+                                Quantité
+                            </label>
+                            <input
+                                type="number"
+                                id="quantity"
+                                name="quantity"
+                                value="1"
+                                min="1"
+                                max="@Model.Product.StockQuantity"
+                                class="w-20 px-3 py-2 text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
                         </div>
+                        <button
+                            type="submit"
+                            class="w-full px-6 py-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                            Ajouter au panier
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div class="p-4 bg-gray-50 rounded-md">
+                        <p class="text-gray-600">
+                            Ce produit n'est actuellement pas disponible.
+                        </p>
                     </div>
                 }
             </div>
         </div>
-    }
+
+        <!-- Produits similaires -->
+        @if (Model.RelatedProducts.Any())
+        {
+            <div class="mt-16">
+                <h2 class="mb-6 text-2xl font-bold text-gray-900">
+                    Produits similaires
+                </h2>
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    @foreach (var product in Model.RelatedProducts)
+                    {
+                        <article class="overflow-hidden transition-shadow bg-white rounded-lg shadow-sm hover:shadow-lg">
+                            <a
+                                asp-action="Details"
+                                asp-route-id="@product.Id"
+                                class="block"
+                            >
+                                <div class="relative aspect-square">
+                                    <img
+                                        src="@product.ImageUrl"
+                                        alt="@product.Name"
+                                        class="absolute inset-0 object-cover w-full h-full"
+                                        loading="lazy"
+                                    />
+                                </div>
+                                <div class="p-4">
+                                    <h3 class="mb-2 text-lg font-semibold text-gray-900 truncate">
+                                        @product.Name
+                                    </h3>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xl font-bold text-blue-600">
+                                            @product.Price.ToString("C")
+                                        </span>
+                                        @if (product is { InStock: true, StockQuantity: > 0 })
+                                        {
+                                            <span class="px-2 py-1 text-sm text-green-800 bg-green-100 rounded-full">
+                                                En stock
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="px-2 py-1 text-sm text-red-800 bg-red-100 rounded-full">
+                                                Rupture de stock
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </a>
+                        </article>
+                    }
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Empêche l'utilisateur d'ajouter plus que le stock disponible
+        document.querySelector('form')?.addEventListener('submit', function (e) {
+            const quantity = parseInt(this.querySelector('#quantity').value);
+            const max = parseInt(this.querySelector('#quantity').max);
+            
+            if (quantity > max) {
+                e.preventDefault();
+                alert(`La quantité maximale disponible est de ${max}`);
+            }
+        });
+    </script>
+}

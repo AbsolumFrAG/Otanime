@@ -200,17 +200,6 @@
                                 </select>
                             </form>
                         </td>
-
-                        <!-- Actions -->
-                        <td class="px-6 py-4 text-right whitespace-nowrap">
-                            <button
-                                type="button"
-                                onclick="showOrderDetails(@order.Id)"
-                                class="text-blue-600 hover:text-blue-900"
-                            >
-                                Détails
-                            </button>
-                        </td>
                     </tr>
                 }
                 </tbody>
@@ -257,7 +246,7 @@
                         <p class="text-sm text-gray-700">
                             Affichage de
                             <span class="font-medium">
-                                @(((ViewBag.CurrentPage - 1) * ViewBag.PageSize) + 1)
+                                @((ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1)
                             </span>
                             à
                             <span class="font-medium">
@@ -299,93 +288,3 @@
         }
     </div>
 </div>
-
-<!-- Modal Détails Commande -->
-<div
-    id="orderDetailsModal"
-    class="fixed inset-0 z-50 hidden overflow-y-auto"
-    aria-labelledby="modal-title"
-    role="dialog"
-    aria-modal="true"
->
-    <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div
-            class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-            aria-hidden="true"
-        ></div>
-        <span class="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">
-            &#8203;
-        </span>
-        <div
-            class="
-                inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom
-                transition-all transform bg-white rounded-lg shadow-xl sm:my-8
-                sm:align-middle sm:max-w-lg sm:w-full sm:p-6
-            "
-        >
-            <div class="absolute top-0 right-0 hidden pt-4 pr-4 sm:block">
-                <button
-                    type="button"
-                    onclick="closeOrderDetails()"
-                    class="text-gray-400 bg-white rounded-md hover:text-gray-500"
-                >
-                    <span class="sr-only">Fermer</span>
-                    <svg
-                        class="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
-            </div>
-            <div class="sm:flex sm:items-start">
-                <div class="w-full mt-3 text-center sm:mt-0 sm:text-left">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
-                        Détails de la commande
-                    </h3>
-                    <div class="mt-4">
-                        <div id="orderDetailsContent" class="mt-4 space-y-4">
-                            <!-- Le contenu sera chargé dynamiquement -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        function showOrderDetails(orderId) {
-            const modal = document.getElementById('orderDetailsModal');
-            const content = document.getElementById('orderDetailsContent');
-
-            // Charger les détails de la commande
-            fetch(`/Admin/GetOrderDetails/${orderId}`)
-                .then(response => response.text())
-                .then(html => {
-                    content.innerHTML = html;
-                    modal.classList.remove('hidden');
-                });
-        }
-
-        function closeOrderDetails() {
-            const modal = document.getElementById('orderDetailsModal');
-            modal.classList.add('hidden');
-        }
-
-        // Fermer la modal avec la touche Échap
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeOrderDetails();
-            }
-        });
-    </script>
-}

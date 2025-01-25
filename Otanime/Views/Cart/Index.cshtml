@@ -1,151 +1,200 @@
 @model Cart
 
 @{
-    ViewData["Title"] = "Votre Panier";
+    ViewData["Title"] = "Panier";
 }
 
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">@ViewData["Title"]</h1>
+<div class="container px-4 py-8 mx-auto max-w-7xl">
+    <h1 class="mb-8 text-2xl font-bold text-gray-900">Votre panier</h1>
 
-    @if (!Model.Items.Any())
+    @if (Model.IsEmpty)
     {
-        <div class="alert alert-info shadow-lg">
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        <div class="p-8 text-center bg-white rounded-lg shadow-sm">
+            <div class="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-blue-50">
+                <svg
+                    class="w-8 h-8 text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4
+                           5M7 13l-2.293 2.293c-.63.63-.184 1.707.707
+                           1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8
+                           2a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
                 </svg>
-                <span>Votre panier est vide. <a asp-controller="Product" asp-action="Index" class="underline">Parcourir les produits</a></span>
             </div>
+            <h2 class="mb-2 text-lg font-medium text-gray-900">Votre panier est vide</h2>
+            <p class="mb-4 text-gray-500">
+                Parcourez notre catalogue pour trouver votre bonheur !
+            </p>
+            <a
+                asp-controller="Product"
+                asp-action="Index"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+                Voir le catalogue
+            </a>
         </div>
     }
     else
     {
-        <div class="grid gap-6">
+        <div class="grid gap-8 lg:grid-cols-12">
             <!-- Liste des articles -->
-            <div class="bg-base-100 rounded-lg shadow-sm divide-y divide-gray-200">
-                @foreach (var item in Model.Items)
-                {
-                    <div class="p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 group">
-                        <!-- Image -->
-                        <img src="@item.Product.ImageUrl" 
-                             alt="@item.Product.Name" 
-                             class="w-24 h-24 object-cover rounded-lg" />
+            <div class="lg:col-span-8">
+                <div class="overflow-hidden bg-white rounded-lg shadow-sm">
+                    <ul class="divide-y divide-gray-200">
+                        @foreach (var item in Model.Items)
+                        {
+                            <li class="p-6">
+                                <div class="flex items-center space-x-4">
+                                    <!-- Image -->
+                                    <a
+                                        asp-controller="Product"
+                                        asp-action="Details"
+                                        asp-route-id="@item.ProductId"
+                                        class="flex-shrink-0"
+                                    >
+                                        <img
+                                            src="@item.Product.ImageUrl"
+                                            alt="@item.Product.Name"
+                                            class="object-cover w-24 h-24 rounded-lg"
+                                        />
+                                    </a>
 
-                        <!-- Détails produit -->
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold">@item.Product.Name</h3>
-                            <p class="text-sm text-gray-500">@item.Product.Category</p>
-                        </div>
+                                    <!-- Informations -->
+                                    <div class="flex-1 min-w-0">
+                                        <a
+                                            asp-controller="Product"
+                                            asp-action="Details"
+                                            asp-route-id="@item.ProductId"
+                                            class="text-lg font-medium text-gray-900 hover:text-blue-600"
+                                        >
+                                            @item.Product.Name
+                                        </a>
+                                        <p class="mt-1 text-sm text-gray-500 truncate">
+                                            @item.Product.Description
+                                        </p>
+                                        <p class="mt-1 text-lg font-bold text-blue-600">
+                                            @item.PriceSnapshot.ToString("C")
+                                        </p>
+                                    </div>
 
-                        <!-- Gestion quantité -->
-                        <div class="flex items-center gap-4">
-                            <form asp-action="UpdateQuantity" method="post" class="flex items-center gap-2">
-                                <input type="hidden" name="itemId" value="@item.Id" />
-                                <input type="number" 
-                                       name="newQuantity" 
-                                       value="@item.Quantity" 
-                                       min="1" 
-                                       class="input input-bordered w-20 text-center" />
-                                <button type="submit" class="btn btn-ghost btn-sm">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                </button>
-                            </form>
-                            
-                            <!-- Prix total -->
-                            <div class="w-24 text-right">
-                                <span class="font-medium">@((item.Quantity * item.PriceSnapshot).ToString("C"))</span>
-                            </div>
+                                    <!-- Quantité -->
+                                    <div class="flex items-center space-x-4">
+                                        <form
+                                            asp-action="UpdateQuantity"
+                                            method="post"
+                                            data-item-id="@item.Id"
+                                            class="quantity-form"
+                                        >
+                                            @Html.AntiForgeryToken()
+                                            <input
+                                                type="hidden"
+                                                name="itemId"
+                                                value="@item.Id"
+                                            />
+                                            <input
+                                                type="number"
+                                                name="newQuantity"
+                                                value="@item.Quantity"
+                                                min="1"
+                                                max="@item.Product.StockQuantity"
+                                                class="w-20 px-3 py-2 text-center border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            />
+                                        </form>
 
-                            <!-- Suppression -->
-                            <form asp-action="RemoveItem" method="post">
-                                <input type="hidden" name="itemId" value="@item.Id" />
-                                <button type="submit" class="btn btn-ghost btn-sm text-error">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                }
+                                        <!-- Supprimer -->
+                                        <form
+                                            asp-action="RemoveItem"
+                                            method="post"
+                                            class="ml-4"
+                                        >
+                                            @Html.AntiForgeryToken()
+                                            <input
+                                                type="hidden"
+                                                name="itemId"
+                                                value="@item.Id"
+                                            />
+                                            <button
+                                                type="submit"
+                                                class="text-sm font-medium text-red-600 hover:text-red-500"
+                                            >
+                                                Supprimer
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
             </div>
 
-            <!-- Résumé du panier -->
-            <div class="bg-base-100 p-6 rounded-lg shadow-sm sticky top-4">
-                <div class="space-y-4">
-                    <h2 class="text-xl font-bold">Récapitulatif</h2>
-                    
-                    <div class="flex justify-between">
-                        <span>Total (@Model.Items.Sum(i => i.Quantity) articles)</span>
-                        <span class="font-bold">@Model.CalculateTotal().ToString("C")</span>
-                    </div>
-
-                    @if (User.Identity is { IsAuthenticated: true })
-                    {
-                        <a asp-action="Checkout" class="btn btn-primary w-full">
-                            Passer la commande
-                        </a>
-                    }
-                    else
-                    {
-                        <div class="alert alert-warning">
-                            <div>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                                <span>Vous devez <a asp-controller="Account" asp-action="Login" class="underline">vous connecter</a> pour commander</span>
-                            </div>
+            <!-- Récapitulatif -->
+            <div class="lg:col-span-4">
+                <div class="sticky p-6 bg-white rounded-lg shadow-sm top-4">
+                    <h2 class="text-lg font-medium text-gray-900">Récapitulatif</h2>
+                    <dl class="mt-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <dt class="text-sm text-gray-600">Sous-total</dt>
+                            <dd class="text-sm font-medium text-gray-900">
+                                @Model.CalculateTotal().ToString("C")
+                            </dd>
                         </div>
-                    }
-
-                    <a asp-controller="Product" asp-action="Index" 
-                       class="btn btn-ghost w-full mt-4">
-                        Continuer mes achats
-                    </a>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <dt class="text-base font-medium text-gray-900">Total</dt>
+                            <dd class="text-base font-medium text-gray-900">
+                                @Model.CalculateTotal().ToString("C")
+                            </dd>
+                        </div>
+                    </dl>
+                    <div class="mt-6">
+                        <a
+                            asp-controller="Cart"
+                            asp-action="Checkout"
+                            class="flex items-center justify-center w-full px-4 py-2 text-base font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                        >
+                            Procéder au paiement
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     }
 </div>
 
-<!-- Notifications -->
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="toast toast-top toast-end">
-        <div class="alert alert-success">
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>@TempData["SuccessMessage"]</span>
-            </div>
-        </div>
-    </div>
+@section Scripts {
+    <script>
+        // Mise à jour automatique des quantités
+        document.querySelectorAll('.quantity-form').forEach(form => {
+            const input = form.querySelector('input[type="number"]');
+            let timeout;
+
+            input.addEventListener('change', (e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    const quantity = parseInt(e.target.value);
+                    const maxQuantity = parseInt(e.target.max);
+
+                    if (quantity > maxQuantity) {
+                        alert(`La quantité maximale disponible est de ${maxQuantity}`);
+                        e.target.value = maxQuantity;
+                        return;
+                    }
+
+                    if (quantity < 1) {
+                        e.target.value = 1;
+                        return;
+                    }
+
+                    form.submit();
+                }, 500);
+            });
+        });
+    </script>
 }
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="toast toast-top toast-end">
-        <div class="alert alert-error">
-            <div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>@TempData["ErrorMessage"]</span>
-            </div>
-        </div>
-    </div>
-}
-
-<style>
-    .toast {
-        animation: slideIn 0.3s ease-out;
-    }
-
-    @@keyframes slideIn {
-        from { transform: translateX(100%); }
-        to { transform: translateX(0); }
-    }
-</style>

@@ -1,144 +1,171 @@
-@using Microsoft.AspNetCore.Mvc.TagHelpers
 @model Otanime.ViewModels.CheckoutViewModel
+
 @{
-    ViewData["Title"] = "Finaliser la commande - Otanime";
+    ViewData["Title"] = "Paiement";
 }
 
-<div class="container px-4 py-8 mx-auto">
-    <div class="max-w-4xl mx-auto">
-        <!-- En-tête -->
-        <div class="mb-8 text-center">
-            <h1 class="mb-4 text-3xl font-bold">Finaliser votre commande</h1>
-            <p class="text-gray-600">Complétez vos informations de livraison et de paiement</p>
-        </div>
+<div class="container max-w-4xl px-4 py-8 mx-auto">
+    <h1 class="mb-8 text-2xl font-bold text-gray-900">Finaliser la commande</h1>
 
-        <form asp-action="Checkout" method="post" class="space-y-8">
-            @Html.AntiForgeryToken()
+    <form asp-action="Checkout" method="post" class="space-y-8">
+        @Html.AntiForgeryToken()
 
+        <div class="grid gap-8 lg:grid-cols-12">
             <!-- Informations de livraison -->
-            <div class="p-6 bg-white rounded-lg shadow-sm">
-                <h2 class="mb-6 text-xl font-semibold">Informations de livraison</h2>
-
-                <div class="grid gap-6 md:grid-cols-2">
-                    <div class="col-span-2">
-                        <label asp-for="ShippingAddress" class="block mb-2 text-sm font-medium text-gray-700"></label>
-                        <input asp-for="ShippingAddress"
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="123 rue de la Paix">
-                        <span asp-validation-for="ShippingAddress" class="text-sm text-red-600"></span>
-                    </div>
-
-                    <div>
-                        <label asp-for="City" class="block mb-2 text-sm font-medium text-gray-700"></label>
-                        <input asp-for="City"
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="Paris">
-                        <span asp-validation-for="City" class="text-sm text-red-600"></span>
-                    </div>
-
-                    <div>
-                        <label asp-for="PostalCode" class="block mb-2 text-sm font-medium text-gray-700"></label>
-                        <input asp-for="PostalCode"
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="75000">
-                        <span asp-validation-for="PostalCode" class="text-sm text-red-600"></span>
-                    </div>
-
-                    <div>
-                        <label asp-for="Country" class="block mb-2 text-sm font-medium text-gray-700"></label>
-                        <select asp-for="Country"
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Sélectionnez un pays</option>
-                            <option value="France">France</option>
-                            <option value="Belgique">Belgique</option>
-                            <option value="Suisse">Suisse</option>
-                            <option value="Luxembourg">Luxembourg</option>
-                        </select>
-                        <span asp-validation-for="Country" class="text-sm text-red-600"></span>
-                    </div>
-
-                    <div>
-                        <label asp-for="PhoneNumber" class="block mb-2 text-sm font-medium text-gray-700"></label>
-                        <input asp-for="PhoneNumber"
-                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="+33 6 12 34 56 78">
-                        <span asp-validation-for="PhoneNumber" class="text-sm text-red-600"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mode de paiement -->
-            <div class="p-6 bg-white rounded-lg shadow-sm">
-                <h2 class="mb-6 text-xl font-semibold">Mode de paiement</h2>
-
-                <div class="space-y-4">
-                    <label asp-for="PaymentMethod" class="block mb-2 text-sm font-medium text-gray-700"></label>
-                    <div class="space-y-2">
-                        <div class="flex items-center">
-                            <input type="radio"
-                                   asp-for="PaymentMethod"
-                                   value="CarteBancaire"
-                                   class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
-                            <label class="block ml-2 text-sm text-gray-700">
-                                Carte bancaire
+            <div class="lg:col-span-8">
+                <div class="p-6 bg-white rounded-lg shadow-sm">
+                    <h2 class="mb-6 text-lg font-medium text-gray-900">Informations de livraison</h2>
+                    <div class="grid gap-6">
+                        <!-- Adresse -->
+                        <div>
+                            <label
+                                asp-for="ShippingAddress"
+                                class="block mb-2 text-sm font-medium text-gray-700"
+                            >
+                                Adresse
                             </label>
+                            <input
+                                asp-for="ShippingAddress"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="123 rue de la Paix"
+                            />
+                            <span asp-validation-for="ShippingAddress" class="text-sm text-red-600"></span>
                         </div>
-                        <div class="flex items-center">
-                            <input type="radio"
-                                   asp-for="PaymentMethod"
-                                   value="PayPal"
-                                   class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
-                            <label class="block ml-2 text-sm text-gray-700">
-                                PayPal
+
+                        <!-- Ville -->
+                        <div>
+                            <label
+                                asp-for="City"
+                                class="block mb-2 text-sm font-medium text-gray-700"
+                            >
+                                Ville
                             </label>
+                            <input
+                                asp-for="City"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Paris"
+                            />
+                            <span asp-validation-for="City" class="text-sm text-red-600"></span>
+                        </div>
+
+                        <!-- Code postal -->
+                        <div>
+                            <label
+                                asp-for="PostalCode"
+                                class="block mb-2 text-sm font-medium text-gray-700"
+                            >
+                                Code postal
+                            </label>
+                            <input
+                                asp-for="PostalCode"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="75000"
+                            />
+                            <span asp-validation-for="PostalCode" class="text-sm text-red-600"></span>
+                        </div>
+
+                        <!-- Pays -->
+                        <div>
+                            <label
+                                asp-for="Country"
+                                class="block mb-2 text-sm font-medium text-gray-700"
+                            >
+                                Pays
+                            </label>
+                            <select
+                                asp-for="Country"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Sélectionnez un pays</option>
+                                <option value="France">France</option>
+                                <option value="Belgique">Belgique</option>
+                                <option value="Suisse">Suisse</option>
+                                <option value="Luxembourg">Luxembourg</option>
+                            </select>
+                            <span asp-validation-for="Country" class="text-sm text-red-600"></span>
+                        </div>
+
+                        <!-- Téléphone -->
+                        <div>
+                            <label
+                                asp-for="PhoneNumber"
+                                class="block mb-2 text-sm font-medium text-gray-700"
+                            >
+                                Téléphone
+                            </label>
+                            <input
+                                asp-for="PhoneNumber"
+                                type="tel"
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="+33 6 12 34 56 78"
+                            />
+                            <span asp-validation-for="PhoneNumber" class="text-sm text-red-600"></span>
                         </div>
                     </div>
-                    <span asp-validation-for="PaymentMethod" class="text-sm text-red-600"></span>
                 </div>
             </div>
 
-            <!-- Récapitulatif de la commande -->
-            <div class="p-6 space-y-4 bg-white rounded-lg shadow-sm">
-                <h2 class="text-xl font-semibold">Récapitulatif de la commande</h2>
+            <!-- Récapitulatif de commande -->
+            <div class="lg:col-span-4">
+                <div class="sticky p-6 bg-white rounded-lg shadow-sm top-4">
+                    <h2 class="text-lg font-medium text-gray-900">Récapitulatif</h2>
+                    <dl class="mt-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <dt class="text-sm text-gray-600">Total</dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                @Model.Total.ToString("C")
+                            </dd>
+                        </div>
+                    </dl>
 
-                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                    <span class="text-lg font-medium text-gray-900">Total</span>
-                    <span class="text-2xl font-bold text-blue-600">@Model.Total.ToString("C")</span>
+                    <div class="mt-6 space-y-4">
+                        <h3 class="text-sm font-medium text-gray-900">Mode de paiement</h3>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="paymentMethod"
+                                    value="card"
+                                    checked
+                                    class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                />
+                                <label class="block ml-3 text-sm text-gray-700">
+                                    Carte bancaire
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="paymentMethod"
+                                    value="paypal"
+                                    class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                />
+                                <label class="block ml-3 text-sm text-gray-700">
+                                    PayPal
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 mt-4 border-t border-gray-200">
+                            <button
+                                type="submit"
+                                class="flex items-center justify-center w-full px-4 py-2 text-base font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                            >
+                                Payer @Model.Total.ToString("C")
+                            </button>
+                        </div>
+
+                        <p class="mt-4 text-xs text-center text-gray-500">
+                            En confirmant votre commande, vous acceptez nos
+                            conditions générales de vente.
+                        </p>
+                    </div>
                 </div>
-
-                <div class="pt-6">
-                    <button type="submit"
-                            class="w-full px-6 py-3 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Confirmer la commande
-                    </button>
-                </div>
-
-                <p class="mt-4 text-sm text-gray-600">
-                    En confirmant votre commande, vous acceptez nos conditions générales de vente.
-                </p>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
-    <script>
-        // Validation côté client personnalisée
-        $(document).ready(function () {
-            $('form').validate({
-                rules: {
-                    PhoneNumber: {
-                        required: true,
-                        phoneFR: true
-                    },
-                    PostalCode: {
-                        required: true,
-                        postalCodeFR: true
-                    }
-                }
-            });
-        });
-    </script>
 }
