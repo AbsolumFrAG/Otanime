@@ -4,6 +4,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,6 +25,16 @@
       <_ContentIncludedByDefault Remove="Views\Admin\Products\Create.cshtml" />
       <_ContentIncludedByDefault Remove="Views\Admin\Products\Edit.cshtml" />
       <_ContentIncludedByDefault Remove="Views\Admin\Products\Index.cshtml" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Conf\" />
     </ItemGroup>
 
 </Project>

@@ -1,0 +1,6 @@
+﻿services:
+  otanime:
+    image: otanime
+    build:
+      context: .
+      dockerfile: Otanime/Dockerfile
