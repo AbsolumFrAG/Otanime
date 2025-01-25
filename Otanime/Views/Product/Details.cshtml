@@ -1,19 +1,73 @@
-@page
-@model Otanime.Views.Product.Details
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model Otanime.ViewModels.ProductDetailViewModel
 
-@{
-    Layout = null;
-}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="grid md:grid-cols-2 gap-8">
+        <!-- Colonne image -->
+        <div class="carousel rounded-box">
+            <div class="carousel-item w-full">
+                <img src="@Model.Product.ImageUrl" 
+                     class="w-full h-96 object-cover" 
+                     alt="@Model.Product.Name" />
+            </div>
+        </div>
 
-<!DOCTYPE html>
+        <!-- Colonne informations -->
+        <div>
+            <h1 class="text-4xl font-bold mb-4">@Model.Product.Name</h1>
+            <div class="badge badge-primary">@Model.Product.Category</div>
+            
+            <p class="text-3xl my-6">@Model.Product.Price.ToString("C")</p>
+            
+            <div class="mb-8">
+                <h2 class="text-xl font-bold mb-2">Description</h2>
+                <p class="text-gray-600">@Model.Product.Description</p>
+            </div>
 
-<html>
-<head>
-    <title></title>
-</head>
-<body>
-<div>
-    
+            <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                <input type="hidden" name="productId" value="@Model.Product.Id" />
+                <div class="flex items-center gap-4">
+                    <input type="number" 
+                           name="quantity" 
+                           value="1" 
+                           min="1" 
+                           class="input input-bordered w-20" />
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-cart-plus mr-2"></i>Ajouter au panier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Produits similaires -->
+    @if (Model.RelatedProducts.Any())
+    {
+        <div class="mt-16">
+            <h2 class="text-2xl font-bold mb-6">Produits similaires</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                @foreach (var product in Model.RelatedProducts)
+                {
+                    <div class="card bg-base-100 shadow-xl">
+                        <figure>
+                            <img src="@product.ImageUrl" 
+                                 alt="@product.Name" 
+                                 class="h-48 w-full object-cover" />
+                        </figure>
+                        <div class="card-body">
+                            <h3 class="card-title">@product.Name</h3>
+                            <p>@product.Price.ToString("C")</p>
+                            <div class="card-actions justify-end">
+                                <a asp-action="Details" 
+                                   asp-route-id="@product.Id" 
+                                   class="btn btn-primary btn-sm">
+                                    Voir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </div>
-</body>
-</html>

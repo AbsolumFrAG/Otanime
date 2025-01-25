@@ -5,25 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Otanime</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body class="bg-gray-100">
-<header class="bg-white shadow-sm">
-    <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
-        <a class="text-2xl font-bold text-blue-600" asp-area="" asp-controller="Home" asp-action="Index">Otanime</a>
-        <partial name="_LoginPartial" />
-    </nav>
+<body class="flex flex-col min-h-screen bg-gray-50">
+<header>
+    <partial name="_Navigation" />
 </header>
 
-<main class="container mx-auto px-4 py-6">
+<main role="main" class="flex-grow container px-4 py-8 mx-auto">
     @RenderBody()
 </main>
 
-<footer class="bg-white border-t mt-8">
-    <div class="container mx-auto px-4 py-4 text-center text-gray-600">
-        &copy; 2025 - AnimeFiguresShop
+<footer class="mt-auto border-t border-gray-200">
+    <div class="container px-4 py-6 mx-auto">
+        <div class="text-center text-gray-600">
+            &copy; 2025 - Otanime
+        </div>
     </div>
 </footer>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

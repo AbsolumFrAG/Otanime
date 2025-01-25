@@ -9,6 +9,7 @@
     <ItemGroup>
       <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.1" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
@@ -20,6 +21,9 @@
     <ItemGroup>
       <_ContentIncludedByDefault Remove="Pages\Auth\Login.cshtml" />
       <_ContentIncludedByDefault Remove="Views\Login\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Products\Create.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Products\Edit.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Products\Index.cshtml" />
     </ItemGroup>
 
 </Project>

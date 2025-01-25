@@ -1,0 +1,269 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model List<Otanime.ViewModels.UserViewModel>
+
+@{
+    ViewData["Title"] = "Gestion des utilisateurs";
+    Layout = "_AdminLayout";
+}
+
+<div class="space-y-6">
+    <!-- En-tête -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Gestion des utilisateurs</h1>
+        <div class="flex gap-2">
+            <a
+                asp-action="Roles"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-5 h-5 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2
+                           c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20
+                           v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7
+                           a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10
+                           a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                </svg>
+                Gérer les rôles
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="p-4 bg-white rounded-lg shadow-sm">
+        <form method="get" class="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div class="flex-1">
+                <label for="search" class="block mb-1 text-sm font-medium text-gray-700">
+                    Rechercher
+                </label>
+                <input
+                    type="text"
+                    name="search"
+                    id="search"
+                    value="@ViewBag.Search"
+                    placeholder="Email ou nom d'utilisateur..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+            </div>
+
+            <div class="flex gap-2">
+                <button
+                    type="submit"
+                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                >
+                    Filtrer
+                </button>
+                <a
+                    asp-action="Users"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                    Réinitialiser
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des utilisateurs -->
+    <div class="overflow-hidden bg-white rounded-lg shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th
+                            scope="col"
+                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
+                        >
+                            Email/Utilisateur
+                        </th>
+                        <th
+                            scope="col"
+                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
+                        >
+                            Rôles
+                        </th>
+                        <th
+                            scope="col"
+                            class="relative px-6 py-3"
+                        >
+                            <span class="sr-only">Actions</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach (var user in Model)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <!-- Email/Utilisateur -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                                            <span class="font-medium text-blue-600">
+                                                @user.Email[..1].ToUpper()
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="font-medium text-gray-900">
+                                            @user.Email
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Rôles -->
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach (var role in user.Roles)
+                                    {
+                                        <span class="inline-flex px-2 text-xs font-semibold leading-5 text-blue-800 bg-blue-100 rounded-full">
+                                            @role
+                                        </span>
+                                    }
+                                    @if (!user.Roles.Any())
+                                    {
+                                        <span class="inline-flex px-2 text-xs font-semibold leading-5 text-gray-800 bg-gray-100 rounded-full">
+                                            Aucun rôle
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <a
+                                        asp-action="EditUserRoles"
+                                        asp-route-id="@user.Id"
+                                        class="text-blue-600 hover:text-blue-900"
+                                    >
+                                        Modifier les rôles
+                                    </a>
+                                    @if (!user.Roles.Contains("Admin"))
+                                    {
+                                        <form
+                                            asp-action="DeleteUser"
+                                            asp-route-id="@user.Id"
+                                            method="post"
+                                            class="inline"
+                                            onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');"
+                                        >
+                                            @Html.AntiForgeryToken()
+                                            <button
+                                                type="submit"
+                                                class="text-red-600 hover:text-red-900"
+                                            >
+                                                Supprimer
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (ViewBag.TotalPages > 1)
+        {
+            <div class="flex items-center justify-between px-4 py-3 bg-gray-50 sm:px-6">
+                <!-- Pagination Mobile -->
+                <div class="flex justify-between flex-1 sm:hidden">
+                    @if (ViewBag.CurrentPage > 1)
+                    {
+                        <a
+                            asp-action="Users"
+                            asp-route-page="@(ViewBag.CurrentPage - 1)"
+                            asp-route-search="@ViewBag.Search"
+                            class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                        >
+                            Précédent
+                        </a>
+                    }
+                    @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                    {
+                        <a
+                            asp-action="Users"
+                            asp-route-page="@(ViewBag.CurrentPage + 1)"
+                            asp-route-search="@ViewBag.Search"
+                            class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                        >
+                            Suivant
+                        </a>
+                    }
+                </div>
+
+                <!-- Pagination Desktop -->
+                <div class="hidden sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Affichage de
+                            <span class="font-medium">
+                                @((ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1)
+                            </span>
+                            à
+                            <span class="font-medium">
+                                @(Math.Min(
+                                    (int)ViewBag.CurrentPage * (int)ViewBag.PageSize,
+                                    (int)ViewBag.TotalItems
+                                ))
+                            </span>
+                            sur
+                            <span class="font-medium">@ViewBag.TotalItems</span>
+                            utilisateurs
+                        </p>
+                    </div>
+                    <div>
+                        <nav
+                            class="inline-flex -space-x-px rounded-md shadow-sm isolate"
+                            aria-label="Pagination"
+                        >
+                            @for (var i = 1; i <= ViewBag.TotalPages; i++)
+                            {
+                                <a
+                                    asp-action="Users"
+                                    asp-route-page="@i"
+                                    asp-route-search="@ViewBag.Search"
+                                    class="
+                                        relative inline-flex items-center px-4 py-2 text-sm font-medium border
+                                        @(i == ViewBag.CurrentPage 
+                                            ? "z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" 
+                                            : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0")
+                                    "
+                                >
+                                    @i
+                                </a>
+                            }
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Activer la recherche en temps réel (debounce)
+        const searchInput = document.getElementById('search');
+        let searchTimeout;
+
+        searchInput?.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                e.target.form.submit();
+            }, 500);
+        });
+    </script>
+}

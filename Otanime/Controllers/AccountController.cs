@@ -1,249 +1,189 @@
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Otanime.Models.ViewModels;
 using Otanime.Services;
+using Otanime.ViewModels;
 
 namespace Otanime.Controllers;
 
+[Authorize]
 public class AccountController(
     UserManager<IdentityUser> userManager,
     SignInManager<IdentityUser> signInManager,
-    ICartService cartService)
+    ICartService cartService,
+    ILogger<AccountController> logger)
     : Controller
 {
-    #region Inscription
-
     [HttpGet]
-    public IActionResult Register()
+    [AllowAnonymous]
+    public IActionResult Register(string? returnUrl = null)
     {
-        if (signInManager.IsSignedIn(User))
-        {
-            return RedirectToAction("Index", "Home");
-        }
-        
+        ViewData["ReturnUrl"] = returnUrl;
         return View();
     }
 
     [HttpPost]
+    [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model)
+    public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
     {
+        ViewData["ReturnUrl"] = returnUrl;
         if (!ModelState.IsValid) return View(model);
-        var user = new IdentityUser
-        {
-            UserName = model.Email,
-            Email = model.Email
-        };
-
+        var user = new IdentityUser { UserName = model.Email, Email = model.Email };
         var result = await userManager.CreateAsync(user, model.Password);
 
         if (result.Succeeded)
         {
-            await userManager.AddToRoleAsync(user, "User");
             await signInManager.SignInAsync(user, isPersistent: false);
-            await cartService.MergeCartsAsync(user.Id);
-            return RedirectToAction("Index", "Home");
+            await cartService.MergeCartsOnLoginAsync(user.Id);
+            logger.LogInformation("User created a new account with password.");
+            return RedirectToLocal(returnUrl);
         }
 
-        foreach (var error in result.Errors)
-        {
-            ModelState.AddModelError(string.Empty, error.Description);
-        }
+        AddErrors(result);
 
         return View(model);
     }
-    #endregion
 
-    #region Connexion
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> Login(string? returnUrl = null)
     {
-        if (signInManager.IsSignedIn(User))
-        {
-            return RedirectToAction("Index", "Home");
-        }
-
         await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-
         ViewData["ReturnUrl"] = returnUrl;
         return View();
     }
 
     [HttpPost]
+    [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
-
         if (!ModelState.IsValid) return View(model);
         var result = await signInManager.PasswordSignInAsync(
             model.Email,
             model.Password,
             model.RememberMe,
             lockoutOnFailure: false);
-        
+
         if (result.Succeeded)
         {
             var user = await userManager.FindByEmailAsync(model.Email);
-            await cartService.MergeCartsAsync(user.Id);
+            await cartService.MergeCartsOnLoginAsync(user.Id);
+            logger.LogInformation("User logged in.");
             return RedirectToLocal(returnUrl);
         }
-            
-        ModelState.AddModelError(string.Empty, "Identifiants invalides");
+        else
+        {
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return View(model);
+        }
 
-        return View(model);
     }
-    #endregion
-    
-    #region Déconnexion
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await signInManager.SignOutAsync();
-        return RedirectToAction("Index", "Home");
-    }
-    #endregion
-    
-    #region Gestion du profil
-
-    [Authorize]
-    public async Task<IActionResult> Profile()
-    {
-        var user = await userManager.GetUserAsync(User);
-        return View(new ProfileViewModel
-        {
-            Email = user.Email,
-            Username = user.UserName
-        });
+        logger.LogInformation("User logged out.");
+        return RedirectToAction(nameof(HomeController.Index), "Home");
     }
 
-    [Authorize]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditProfile(ProfileViewModel model)
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult ExternalLogin(string provider, string? returnUrl = null)
     {
-        if (ModelState.IsValid)
+        var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
+        var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+        return Challenge(properties, provider);
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+    {
+        if (remoteError != null)
         {
-            var user = await userManager.GetUserAsync(User);
-            user.Email = model.Email;
-            user.UserName = model.Email;
-
-            var result = await userManager.UpdateAsync(user);
-
-            if (result.Succeeded)
-            {
-                ViewData["SuccessMessage"] = "Profil mis à jour avec succès";
-                return View("Profile", model);
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
+            ModelState.AddModelError(string.Empty, $"Error from external provider: {remoteError}");
+            return View(nameof(Login));
         }
 
-        return View("Profile", model);
-    }
-    #endregion
-    
-    #region Gestion des mots de passe
+        var info = await signInManager.GetExternalLoginInfoAsync();
+        if (info == null)
+        {
+            return RedirectToAction(nameof(Login));
+        }
 
-    [Authorize]
-    [HttpGet]
-    public IActionResult ChangePassword()
-    {
-        return View();
-    }
-
-    [Authorize]
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
-    {
-        if (!ModelState.IsValid) return View(model);
-        var user = await userManager.GetUserAsync(User);
-        var result = await userManager.ChangePasswordAsync(
-            user,
-            model.OldPassword,
-            model.NewPassword);
+        var result = await signInManager.ExternalLoginSignInAsync(
+            info.LoginProvider,
+            info.ProviderKey,
+            isPersistent: false,
+            bypassTwoFactor: true);
 
         if (result.Succeeded)
         {
-            await signInManager.SignOutAsync();
-            return RedirectToAction("Login");
+            var user = await userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            await cartService.MergeCartsOnLoginAsync(user.Id);
+            return RedirectToLocal(returnUrl);
         }
 
-        foreach (var error in result.Errors)
+        if (result.IsLockedOut)
         {
-            ModelState.AddModelError(string.Empty, error.Description);
-        }
-
-        return View(model);
-    }
-    #endregion
-    
-    #region Panel Admin
-
-    [Authorize(Roles = "Admin")]
-    public IActionResult AdminPanel()
-    {
-        return View();
-    }
-
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> ManageUsers()
-    {
-        var users = userManager.Users;
-        var userRoles = new List<UserRolesViewModel>();
-
-        foreach (var user in users)
-        {
-            var roles = await userManager.GetRolesAsync(user);
-            userRoles.Add(new UserRolesViewModel
-            {
-                UserId = user.Id,
-                Email = user.Email,
-                Roles = roles
-            });
-        }
-
-        return View(userRoles);
-    }
-
-    [Authorize(Roles = "Admin")]
-    [HttpPost]
-    public async Task<IActionResult> ToggleAdminRole(string userId)
-    {
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null) return NotFound();
-
-        if (await userManager.IsInRoleAsync(user, "Admin"))
-        {
-            await userManager.RemoveFromRoleAsync(user, "Admin");
+            return View("Lockout");
         }
         else
         {
-            await userManager.AddToRoleAsync(user, "Admin");
+            ViewData["ReturnUrl"] = returnUrl;
+            ViewData["Provider"] = info.LoginProvider;
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            return View("ExternalLoginConfirmation", new ExternalLoginViewModel { Email = email });
+        }
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExternalLoginConfirmation(
+        ExternalLoginViewModel model, string? returnUrl = null)
+    {
+        if (!ModelState.IsValid) return View(model);
+        var info = await signInManager.GetExternalLoginInfoAsync();
+        if (info == null)
+        {
+            return View("Error");
         }
 
-        return RedirectToAction("ManageUsers");
-    }
-    #endregion
-    
-    #region Méthodes privées
+        var user = new IdentityUser { UserName = model.Email, Email = model.Email };
+        var result = await userManager.CreateAsync(user);
 
-    private IActionResult RedirectToLocal(string returnUrl)
+        if (result.Succeeded)
+        {
+            result = await userManager.AddLoginAsync(user, info);
+            if (result.Succeeded)
+            {
+                await signInManager.SignInAsync(user, isPersistent: false);
+                await cartService.MergeCartsOnLoginAsync(user.Id);
+                return RedirectToLocal(returnUrl);
+            }
+        }
+
+        AddErrors(result);
+
+        return View(model);
+    }
+
+    private IActionResult RedirectToLocal(string? returnUrl)
     {
         if (Url.IsLocalUrl(returnUrl))
         {
             return Redirect(returnUrl);
         }
 
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction(nameof(HomeController.Index), "Home");
     }
 
     private void AddErrors(IdentityResult result)
@@ -253,5 +193,4 @@ public class AccountController(
             ModelState.AddModelError(string.Empty, error.Description);
         }
     }
-    #endregion
 }

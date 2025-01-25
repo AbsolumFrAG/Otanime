@@ -1,43 +1,77 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Otanime.Data;
-using System.Text.Json.Serialization;
+using Otanime.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews()
-    .AddJsonOptions(options =>
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+// Configuration des services
+builder.Services.AddControllersWithViews();
 
-// Ajouter le contexte de la base de données SQLite
-builder.Services.AddDbContext<ApplicationDbContext>(options => 
-{
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
-    options.EnableDetailedErrors();
-    options.EnableSensitiveDataLogging();
-});
+// Configuration de la base de données SQLite
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Configuration de l'authentification
+builder.Services.AddDefaultIdentity<IdentityUser>(options => {
+        options.SignIn.RequireConfirmedAccount = false;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequiredLength = 6;
+    })
+    .AddRoles<IdentityRole>() // Activation des rôles
+    .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Services personnalisés
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<DbInitializer>();
+
+// Configuration du pipeline HTTP
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Initialisation de la base de données
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var initializer = services.GetRequiredService<DbInitializer>();
+        await initializer.Initialize(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Erreur lors de l'initialisation de la base de données");
+    }
+}
+
+// Configuration du middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+}
+else
+{
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapStaticAssets();
+// Configuration des routes
+app.MapControllerRoute(
+    name: "admin",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
+app.MapRazorPages();
 
 app.Run();

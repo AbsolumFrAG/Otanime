@@ -1,31 +1,44 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Otanime.Models;
 
 public class CartItem
 {
-    public int Id { get; set; }
-    
-    [Required]
-    public int ProductId { get; set; }
-    
-    [ForeignKey("ProductId")]
-    public Product Product { get; set; }
-    
-    [Required]
-    [Range(1, 1000, ErrorMessage = "la quantité doit être entre 1 et 1000")]
-    public int Quantity { get; set; }
-    
-    [Required]
-    public int CartId { get; set; }
-    
-    [ForeignKey("CartId")]
-    public Cart Cart { get; set; }
-    
-    [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal PriceSnapShot { get; set; }
+    public int Id { get; init; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    [Required]
+    public int ProductId { get; init; }
+
+    [ForeignKey("ProductId")]
+    public Product Product { get; init; }
+
+    [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "La quantité doit être au moins 1")]
+    public int Quantity { get; set; } = 1;
+
+    [Required]
+    public int CartId { get; init; }
+
+    [ForeignKey("CartId")]
+    public Cart Cart { get; init; }
+
+    [Display(Name = "Date d'ajout")]
+    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+
+    [Display(Name = "Dernière modification")]
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    // Prix au moment de l'ajout au panier
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal PriceSnapshot { get; init; }
+
+    public void UpdateQuantity(int newQuantity)
+    {
+        if(newQuantity < 0) 
+            throw new ArgumentException("La quantité ne peut pas être négative");
+
+        Quantity = newQuantity;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

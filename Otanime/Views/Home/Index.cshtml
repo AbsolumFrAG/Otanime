@@ -1,8 +1,243 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model Otanime.ViewModels.HomeViewModel
+@{
+   ViewData["Title"] = "Otanime - Figurines d'Anime";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container px-4 py-8 mx-auto">
+   <!-- Hero Section -->
+   <section class="mb-8 text-center">
+      <h1 class="mb-4 text-4xl font-bold">Bienvenue chez Otanime</h1>
+      <p class="mb-6 text-gray-600">Découvrez notre collection unique de figurines d'anime</p>
+   </section>
+
+   <!-- Filtres et Recherche -->
+   <section class="mb-8">
+      <form method="get" class="flex flex-col gap-4 p-4 bg-white rounded-lg shadow-sm md:flex-row md:items-end">
+         <!-- Recherche -->
+         <div class="flex-1">
+            <input
+               type="text"
+               name="searchTerm"
+               value="@Model.SearchTerm"
+               placeholder="Rechercher une figurine..."
+               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+               autocomplete="off"
+            />
+         </div>
+
+         <!-- Filtre Catégorie -->
+         <div class="w-full md:w-48">
+            <select
+               name="category"
+               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+               <option value="">Toutes les catégories</option>
+               @foreach (var category in Model.Categories.Where(c => !string.IsNullOrEmpty(c)))
+               {
+                  <option
+                     value="@category"
+                     selected="@(category == Model.SelectedCategory)"
+                  >
+                     @category
+                  </option>
+               }
+            </select>
+         </div>
+
+         <!-- Tri -->
+         <div class="w-full md:w-48">
+            <select
+               name="sortBy"
+               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+               <option value="name" selected="@(Model.SortBy == "name")">Nom (A-Z)</option>
+               <option value="price" selected="@(Model.SortBy == "price")">Prix croissant</option>
+               <option value="price_desc" selected="@(Model.SortBy == "price_desc")">Prix décroissant</option>
+            </select>
+         </div>
+
+         <!-- Bouton Rechercher -->
+         <button
+            type="submit"
+            class="w-full px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 md:w-auto"
+         >
+            Rechercher
+         </button>
+      </form>
+   </section>
+
+   <!-- Résultats -->
+   <section>
+      @if (!Model.Products.Any())
+      {
+         <div class="flex flex-col items-center justify-center p-8 bg-white rounded-lg">
+            <p class="mb-4 text-xl text-gray-600">Aucune figurine trouvée</p>
+            <a
+               asp-action="Index"
+               class="text-blue-600 hover:underline"
+            >
+               Voir toutes les figurines
+            </a>
+         </div>
+      }
+      else
+      {
+         <!-- Grille de Produits -->
+         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            @foreach (var product in Model.Products)
+            {
+               <article class="overflow-hidden transition-shadow bg-white rounded-lg shadow hover:shadow-lg">
+                  <a
+                     asp-controller="Product"
+                     asp-action="Details"
+                     asp-route-id="@product.Id"
+                  >
+                     <!-- Image -->
+                     <div class="relative aspect-square">
+                        <img
+                           src="@product.ImageUrl"
+                           alt="@product.Name"
+                           class="absolute inset-0 object-cover w-full h-full"
+                        />
+                     </div>
+
+                     <!-- Informations -->
+                     <div class="p-4">
+                        <h3 class="mb-2 text-lg font-semibold text-gray-900 truncate">
+                           @product.Name
+                        </h3>
+                        <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xl font-bold text-blue-600">
+                                        @product.Price.ToString("C")
+                                    </span>
+
+                           @if (product is { InStock: true, StockQuantity: > 0 })
+                           {
+                              <span class="px-2 py-1 text-sm text-green-800 bg-green-100 rounded-full">
+                                            En stock
+                                        </span>
+                           }
+                           else
+                           {
+                              <span class="px-2 py-1 text-sm text-red-800 bg-red-100 rounded-full">
+                                            Rupture de stock
+                                        </span>
+                           }
+                        </div>
+                        <p class="text-sm text-gray-600 line-clamp-2">
+                           @product.Description
+                        </p>
+                     </div>
+                  </a>
+               </article>
+            }
+         </div>
+
+         <!-- Pagination -->
+         @if (Model.Pagination.TotalPages > 1)
+         {
+            <div class="flex justify-center mt-8">
+               <nav class="inline-flex gap-2" role="navigation" aria-label="Pagination">
+                  @if (Model.Pagination.CurrentPage > 1)
+                  {
+                     <a
+                        asp-all-route-data="@(new Dictionary<string, string>
+                                            {
+                                               { "page", (Model.Pagination.CurrentPage - 1).ToString() },
+                                               { "searchTerm", Model.SearchTerm ?? "" },
+                                               { "category", Model.SelectedCategory ?? "" },
+                                               { "sortBy", Model.SortBy ?? "" }
+                                            })"
+                        class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                     >
+                        Précédent
+                     </a>
+                  }
+
+                  @{
+                     const int maxVisiblePages = 5;
+                     var startPage = Math.Max(1, Model.Pagination.CurrentPage - maxVisiblePages / 2);
+                     var endPage = Math.Min(Model.Pagination.TotalPages, startPage + maxVisiblePages - 1);
+                     startPage = Math.Max(1, endPage - maxVisiblePages + 1);
+                  }
+
+                  @if (startPage > 1)
+                  {
+                     <span class="px-4 py-2 text-gray-700">
+                                ...
+                            </span>
+                  }
+
+                  @for (var i = startPage; i <= endPage; i++)
+                  {
+                     <a
+                        asp-all-route-data="@(new Dictionary<string, string>
+                                            {
+                                               { "page", i.ToString() },
+                                               { "searchTerm", Model.SearchTerm ?? "" },
+                                               { "category", Model.SelectedCategory ?? "" },
+                                               { "sortBy", Model.SortBy ?? "" }
+                                            })"
+                        class="px-4 py-2 border rounded-lg @(i == Model.Pagination.CurrentPage
+                                                              ? "bg-blue-600 text-white border-blue-600"
+                                                              : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50")"
+                     >
+                        @i
+                     </a>
+                  }
+
+                  @if (endPage < Model.Pagination.TotalPages)
+                  {
+                     <span class="px-4 py-2 text-gray-700">
+                                ...
+                            </span>
+                  }
+
+                  @if (Model.Pagination.CurrentPage < Model.Pagination.TotalPages)
+                  {
+                     <a
+                        asp-all-route-data="@(new Dictionary<string, string>
+                                            {
+                                               { "page", (Model.Pagination.CurrentPage + 1).ToString() },
+                                               { "searchTerm", Model.SearchTerm ?? "" },
+                                               { "category", Model.SelectedCategory ?? "" },
+                                               { "sortBy", Model.SortBy ?? "" }
+                                            })"
+                        class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                     >
+                        Suivant
+                     </a>
+                  }
+               </nav>
+            </div>
+         }
+      }
+   </section>
 </div>
+
+@section Scripts {
+   <script>
+      // Auto-complétion de la recherche
+      const searchInput = document.querySelector('input[name="searchTerm"]');
+      let searchTimeout;
+
+      searchInput?.addEventListener('input', (e) => {
+         clearTimeout(searchTimeout);
+
+         if (e.target.value.length < 2) return;
+
+         searchTimeout = setTimeout(async () => {
+            try {
+               const response = await fetch(`/Product/SearchSuggestions?term=${encodeURIComponent(e.target.value)}`);
+               if (!response.ok) throw new Error('Erreur réseau');
+
+               const suggestions = await response.json();
+               // TODO: Implémenter l'affichage des suggestions
+            } catch (error) {
+               console.error('Erreur lors de la recherche:', error);
+            }
+         }, 300);
+      });
+   </script>
+}

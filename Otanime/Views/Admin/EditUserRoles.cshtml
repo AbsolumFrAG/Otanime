@@ -1,0 +1,185 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model Otanime.ViewModels.UserRolesViewModel
+
+@{
+    ViewData["Title"] = "Gérer les rôles utilisateur";
+    Layout = "_AdminLayout";
+}
+
+<div class="container max-w-4xl py-6 mx-auto">
+    <!-- En-tête -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Gérer les rôles</h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Modification des rôles pour @Model.Email
+            </p>
+        </div>
+        <a
+            asp-action="Users"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-5 h-5 mr-2 -ml-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+            </svg>
+            Retour à la liste
+        </a>
+    </div>
+
+    <div class="overflow-hidden bg-white rounded-lg shadow">
+        <form asp-action="EditUserRoles" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="UserId" />
+            <input type="hidden" asp-for="Email" />
+
+            <!-- Liste des rôles -->
+            <div class="px-4 py-5 sm:p-6">
+                <div class="space-y-6">
+                    <div class="grid gap-6 lg:grid-cols-2">
+                        <!-- Rôles actuels -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Rôles actuels</h3>
+                            <div class="mt-4 space-y-4">
+                                @if (Model.CurrentRoles.Any())
+                                {
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach (var role in Model.CurrentRoles)
+                                        {
+                                            <span
+                                                class="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 rounded-full"
+                                            >
+                                                @role
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-sm text-gray-500">
+                                        Aucun rôle attribué
+                                    </p>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Gérer les rôles -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">Gérer les rôles</h3>
+                            <div class="mt-4 space-y-4">
+                                @foreach (var role in Model.AvailableRoles)
+                                {
+                                    <div class="relative flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input
+                                                type="checkbox"
+                                                name="SelectedRoles"
+                                                value="@role"
+                                                @(Model.CurrentRoles.Contains(role) ? "checked" : "")
+                                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            />
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label class="font-medium text-gray-700">
+                                                @role
+                                            </label>
+                                            <p class="text-gray-500">
+                                                @(
+                                                role switch
+                                                {
+                                                    "Admin"    => "Accès complet à toutes les fonctionnalités",
+                                                    "User"     => "Accès standard au site",
+                                                    _ => "Accès standard au site"
+                                                }
+                                                )
+                                            </p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!ViewContext.ModelState.IsValid)
+                    {
+                        <div class="p-4 rounded-md bg-red-50">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg
+                                        class="w-5 h-5 text-red-400"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707
+                                               7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293
+                                               1.293a1 1 0 101.414 1.414L10
+                                               11.414l1.293 1.293a1 1 0
+                                               001.414-1.414L11.414 10l1.293-1.293a1
+                                               1 0 00-1.414-1.414L10
+                                               8.586 8.707 7.293z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <div
+                                        asp-validation-summary="All"
+                                        class="text-sm text-red-700"
+                                    >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="px-4 py-3 text-right bg-gray-50 sm:px-6">
+                <div class="flex justify-end space-x-3">
+                    <a
+                        asp-action="Users"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        Annuler
+                    </a>
+                    <button
+                        type="submit"
+                        class="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        Enregistrer les modifications
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Confirmer les changements importants
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const adminRoleCheckbox = document.querySelector('input[value="Admin"]');
+            const wasAdmin = @Json.Serialize(Model.CurrentRoles.Contains("Admin"));
+            const willBeAdmin = adminRoleCheckbox.checked;
+
+            if (wasAdmin && !willBeAdmin) {
+                if (!confirm('Attention : Vous êtes sur le point de retirer le rôle Admin. Êtes-vous sûr ?')) {
+                    e.preventDefault();
+                }
+            }
+        });
+    </script>
+}

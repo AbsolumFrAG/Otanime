@@ -1,80 +1,70 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Otanime.Data;
-using Otanime.Models;
-using Otanime.Models.ViewModels;
-using Otanime.Services;
+using Otanime.ViewModels;
+using System.Diagnostics;
 
 namespace Otanime.Controllers;
 
 public class HomeController(
     ILogger<HomeController> logger,
-    ApplicationDbContext context,
-    ICartService cartService)
+    ApplicationDbContext context)
     : Controller
 {
-    private readonly ILogger<HomeController> _logger = logger;
-    private readonly ICartService _cartService = cartService;
-
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        string searchTerm,
+        string category,
+        string sortBy = "name",
+        int page = 1,
+        int pageSize = 12)
     {
-        var featuredProducts = await context.Products
-            .OrderByDescending(p => p.CreatedAt)
-            .Take(8)
+        var query = context.Products
+            .Where(p => p.InStock)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            query = query.Where(p =>
+                p.Name.Contains(searchTerm) ||
+                p.Description.Contains(searchTerm));
+        }
+
+        if (!string.IsNullOrEmpty(category))
+        {
+            query = query.Where(p => p.Category == category);
+        }
+
+        query = sortBy.ToLower() switch
+        {
+            "price" => query.OrderBy(p => (double)p.Price),
+            "price_desc" => query.OrderByDescending(p => (double)p.Price),
+            _ => query.OrderBy(p => p.Name)
+        };
+
+        var totalItems = await query.CountAsync();
+        var products = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
         var vm = new HomeViewModel
         {
-            FeaturedProducts = featuredProducts,
-            NewArrivals = await context.Products
-                .OrderByDescending(p => p.ReleaseDate)
-                .Take(4)
-                .ToListAsync()
+            Products = products,
+            Categories = await context.Products
+                .Select(p => p.Category)
+                .Distinct()
+                .ToListAsync(),
+            SearchTerm = searchTerm,
+            SelectedCategory = category,
+            SortBy = sortBy,
+            Pagination = new PaginationInfo
+            {
+                CurrentPage = page,
+                ItemsPerPage = pageSize,
+                TotalItems = totalItems
+            }
         };
 
         return View(vm);
-    }
-
-    public async Task<IActionResult> ProductDetails(int id)
-    {
-        var product = await context.Products
-            .Include(p => p.RelatedProducts)
-            .FirstOrDefaultAsync(p => p.Id == id);
-
-        if (product == null)
-        {
-            return NotFound();
-        }
-
-        return View(product);
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> Search(string query)
-    {
-        var results = await context.Products
-            .Where(p => p.Name.Contains(query) || p.Description.Contains(query))
-            .ToListAsync();
-
-        return View(new SearchViewModel
-        {
-            Query = query,
-            Results = results
-        });
-    }
-
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel
-        {
-            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
-        });
     }
 }

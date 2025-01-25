@@ -1,44 +1,151 @@
-@model List<dynamic>
+@model Cart
 
 @{
-    ViewData["Title"] = "Panier";
+    ViewData["Title"] = "Votre Panier";
 }
 
-<h1>Votre Panier</h1>
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">@ViewData["Title"]</h1>
 
-@if (Model.Count == 0)
+    @if (!Model.Items.Any())
+    {
+        <div class="alert alert-info shadow-lg">
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Votre panier est vide. <a asp-controller="Product" asp-action="Index" class="underline">Parcourir les produits</a></span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="grid gap-6">
+            <!-- Liste des articles -->
+            <div class="bg-base-100 rounded-lg shadow-sm divide-y divide-gray-200">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 group">
+                        <!-- Image -->
+                        <img src="@item.Product.ImageUrl" 
+                             alt="@item.Product.Name" 
+                             class="w-24 h-24 object-cover rounded-lg" />
+
+                        <!-- Détails produit -->
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold">@item.Product.Name</h3>
+                            <p class="text-sm text-gray-500">@item.Product.Category</p>
+                        </div>
+
+                        <!-- Gestion quantité -->
+                        <div class="flex items-center gap-4">
+                            <form asp-action="UpdateQuantity" method="post" class="flex items-center gap-2">
+                                <input type="hidden" name="itemId" value="@item.Id" />
+                                <input type="number" 
+                                       name="newQuantity" 
+                                       value="@item.Quantity" 
+                                       min="1" 
+                                       class="input input-bordered w-20 text-center" />
+                                <button type="submit" class="btn btn-ghost btn-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                </button>
+                            </form>
+                            
+                            <!-- Prix total -->
+                            <div class="w-24 text-right">
+                                <span class="font-medium">@((item.Quantity * item.PriceSnapshot).ToString("C"))</span>
+                            </div>
+
+                            <!-- Suppression -->
+                            <form asp-action="RemoveItem" method="post">
+                                <input type="hidden" name="itemId" value="@item.Id" />
+                                <button type="submit" class="btn btn-ghost btn-sm text-error">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Résumé du panier -->
+            <div class="bg-base-100 p-6 rounded-lg shadow-sm sticky top-4">
+                <div class="space-y-4">
+                    <h2 class="text-xl font-bold">Récapitulatif</h2>
+                    
+                    <div class="flex justify-between">
+                        <span>Total (@Model.Items.Sum(i => i.Quantity) articles)</span>
+                        <span class="font-bold">@Model.CalculateTotal().ToString("C")</span>
+                    </div>
+
+                    @if (User.Identity is { IsAuthenticated: true })
+                    {
+                        <a asp-action="Checkout" class="btn btn-primary w-full">
+                            Passer la commande
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <div>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span>Vous devez <a asp-controller="Account" asp-action="Login" class="underline">vous connecter</a> pour commander</span>
+                            </div>
+                        </div>
+                    }
+
+                    <a asp-controller="Product" asp-action="Index" 
+                       class="btn btn-ghost w-full mt-4">
+                        Continuer mes achats
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Notifications -->
+@if (TempData["SuccessMessage"] != null)
 {
-    <p>Votre panier est vide.</p>
+    <div class="toast toast-top toast-end">
+        <div class="alert alert-success">
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+        </div>
+    </div>
 }
-else
+
+@if (TempData["ErrorMessage"] != null)
 {
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Produit</th>
-            <th>Prix unitaire</th>
-            <th>Quantité</th>
-            <th>Sous-total</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.Product.Name</td>
-                <td>@item.Product.Price</td>
-                <td>@item.Quantity</td>
-                <td>@((item.Quantity * item.Product.Price).ToString("C"))</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-    
-    <div class="text-end">
-        <h3>Total : </h3>
-    </div>
-    
-    <div class="text-end">
-        <a href="#" class="btn btn-primary">Passer la commande</a>
+    <div class="toast toast-top toast-end">
+        <div class="alert alert-error">
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
+        </div>
     </div>
 }
+
+<style>
+    .toast {
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @@keyframes slideIn {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+    }
+</style>

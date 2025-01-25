@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 
@@ -6,71 +6,93 @@ namespace Otanime.Models;
 
 public class Order
 {
-    public int Id { get; set; }
-    
-    [Required]
-    public string UserId { get; set; }
-    
-    [ForeignKey("UserId")]
-    public IdentityUser User { get; set; }
+    public int Id { get; init; }
 
     [Required]
-    public DateTime OrderDate { get; set; } = DateTime.UtcNow;
-    
+    public string UserId { get; init; }
+
+    [ForeignKey("UserId")]
+    public IdentityUser User { get; init; }
+
     [Required]
     [Column(TypeName = "decimal(18,2)")]
-    [Range(0.01, 100000, ErrorMessage = "Montant total invalide")]
-    public decimal TotalAmount { get; set; }
-    
-    [Required]
-    [StringLength(200, MinimumLength = 10)]
-    public string ShippingAddress { get; set; }
+    [Range(0.01, 100000, ErrorMessage = "Le total doit être supérieur à 0")]
+    public decimal Total { get; init; }
 
     [Required]
-    public OrderStatus Status { get; set; } = OrderStatus.Pending;
-    
+    public DateTime OrderDate { get; init; } = DateTime.UtcNow;
+
+    [Required]
+    [StringLength(255)]
+    public string ShippingAddress { get; init; }
+
+    [Required]
+    [StringLength(100)]
+    public string City { get; init; }
+
+    [Required]
+    [StringLength(20)]
+    public string PostalCode { get; init; }
+
+    [Required]
     [StringLength(50)]
-    public string TrackingNumber { get; set; }
-    
-    [Required]
+    public string Country { get; init; }
+
+    [Phone]
+    [StringLength(20)]
+    public string PhoneNumber { get; init; }
+
     [EmailAddress]
-    public string CustomerEmail { get; set; }
-    
-    public string PaymentIntentId { get; set; }
+    [StringLength(100)]
+    public string Email { get; init; }
 
-    public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+    public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
-    public enum OrderStatus
-    {
-        Pending,
-        Processing,
-        Shipped,
-        Delivered,
-        Cancelled
-    }
+    // Relations
+    public ICollection<OrderItem> OrderItems { get; init; } = new List<OrderItem>();
+
+    // Payment information
+    [Required]
+    [StringLength(50)]
+    public string PaymentMethod { get; init; }
+
+    [Required]
+    [StringLength(100)]
+    public string PaymentReference { get; init; }
+
+    public DateTime? PaymentDate { get; init; }
 }
 
 public class OrderItem
 {
-    public int Id { get; set; }
-    
+    public int Id { get; init; }
+
     [Required]
-    public int ProductId { get; set; }
-    
+    public int ProductId { get; init; }
+
     [ForeignKey("ProductId")]
-    public Product Product { get; set; }
-    
+    public Product Product { get; init; }
+
     [Required]
-    [Range(1, 100)]
-    public int Quantity { get; set; }
-    
+    public int Quantity { get; init; }
+
     [Required]
     [Column(TypeName = "decimal(18,2)")]
-    public decimal UnitPrice { get; set; }
-    
+    public decimal UnitPrice { get; init; }
+
     [Required]
-    public int OrderId { get; set; }
-    
+    public int OrderId { get; init; }
+
     [ForeignKey("OrderId")]
-    public Order Order { get; set; }
+    public Order Order { get; init; }
+}
+
+public enum OrderStatus
+{
+    Pending,
+    Processing,
+    Shipped,
+    Delivered,
+    Cancelled,
+    Refunded
 }
